@@ -1,109 +1,65 @@
-/*PageImages - Bookmarklet*/
-/*Based on Pinterest's bookmarklet*/ 
+(function($) {
+// simplified, crapified Pinterest bookmarklet grid
 
-/*Todo: Add functions, show total number of images, filter between background and foreground, allow user to set max and min size. resize thumbnails. lightbox image. download all. */
+var app = {
+	opts: {
+		style: ''//'@import url("http://dl.dropbox.com/u/5045906/imagesbookmarklet/style.css");'
+		, w: '30%'
+		, h: '400px'
+		, minw: 150
+		, minh: 200
+	}
+	,
+	zindex: 500
+	,
+	$box: false
+	,
+	start: function() {
+		// external option overrides from global var options
+		app.opts = $.extend(app.opts, typeof bkoptions === typeof undefined ? {} : bkoptions);
+	
+		// stylesheet or style list
+		$('<style type="text/css">#bg-blocker{background-color:#ccc;opacity:0.9;position:fixed;height:100%;width:100%;z-index:' + (app.zindex) + ';top:0;left:0} #ig-box {position:absolute;top:0;left:0;width:100%;z-index:' + (app.zindex+1) + '} #ig-box img{border:3px solid black;} ' + app.opts.style + '</style>').appendTo("head");
+		
+		// build
+		app.build();
+		
+		// add cover, elements
+		$('body').append('<div id="bg-blocker"></div>')
+			.prepend(app.$box);
 
+	}//--	fn	start
+	,
+	build: function() {
+		app.$box = $('<div id="ig-box"></div>');
+		
+		// Find images and add to list
+		$('img').each(function() {
+			var $i = $(this);
+			
+			if( console && console.log ) console.log( $i.attr('src'), $i.width(), $i.height() );
+			
+			// not big enough?
+			if( $i.width() <= app.opts.minw || $i.height() <= app.opts.minh ) return;
+			
+			var $a = $('<a target="_blank" />').attr('href', $i.attr('src')).append($i);
 
-if (typeof jQuery == 'undefined') {
+			$i.css({"max-width": app.opts.w, "max-height": app.opts.h});
+			app.$box.append($a);
+		});
+	}//--	fn	build
+};
+
+// ensure jquery
+if(!$) {
 	var jQ = document.createElement('script');
 	jQ.type = 'text/javascript';
-	jQ.onload=runthis;
+	jQ.onload=app.start;
 	jQ.src = 'http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js';
 	document.body.appendChild(jQ);
 }
-
 else {
-	runthis();
+	app.start();
 }
 
-function runthis() {
-	
-	jQuery(document).ready(function(){
-    	
-    	jQuery('html, body').animate({scrollTop:0}, 'fast');
-    	
-    	/* Check whether Bookmarklet is already visible */	
-		if(jQuery('#image-grabber-container').length == 0) {
-			
-			var numberOfImages = 0;
-			
-			/*Add css - Must change this if you want to use your own CSS*/
-			jQuery('<style type="text/css">@import url("http://dl.dropbox.com/u/5045906/imagesbookmarklet/style.css");</style>').appendTo("head");
-						
-			/*Add toggle*/
-			jQuery('body').append('<div id="background-blocker"></div><div id="image-grabber-container"><div id="button-toggle"><span id="close">Close</span><span id="count"></span></div><ul id="list-of-images"></ul></div>');
-			
-			
-			/*Make toggle work*/
-			jQuery("#button-toggle").click(function() {
-				jQuery("#image-grabber-container, #background-blocker").remove();
-			});
-	
-			/*Find images and add to list*/			
-			jQuery('img').each(function() {
-				var _sudoThing = jQuery(this);							
-				addImage(_sudoThing);
-			});
-				
-			/*Find background images and add to list*/
-			jQuery('*:visible').each(function() {
-				var _sudoBackground = jQuery(this);
-				var	backgroundImage = _sudoBackground.css('background-image');
-				
-				if (backgroundImage !== "none")
-				{
-					addImage(_sudoBackground);
-				}			
-			});
-		
-		jQuery('#count').text(numberOfImages);
-		
-   		}
-   
-
-	function addImage( imageToAdd ) {
-		
-				
-		var imageURL = imageToAdd.attr('src');
-		console.log(imageURL);
-		
-		if (imageURL === undefined)
-		{
-			console.log(imageToAdd.css('background-image').slice(4,-1));
-			imageURL = imageToAdd.css('background-image').slice(4,-1);
-		}
-		
-		var beginLiTag = "<li><a href='";
-		var endATag = "'>";
-		var beginImageTag = "<img src='";
-		var middleImageTag = "' style='margin-top:";
-		var endImageTag = "px'>";
-		var endLiTag = "</a></li>";
-		var imageWidth = imageToAdd.width();
-		var imageHeight = imageToAdd.height();
-		
-		var containData = imageURL.indexOf('data:');
-
-			
-		/*Check whether image big enough*/
-		if(imageWidth > 150 && imageHeight > 200 && containData === -1) {
-			/*Calculate margin to vertically center*/		
-			if (imageWidth > imageHeight) {
-				var calculatedMargin = (200 - (200 * (imageHeight / imageWidth))) * 0.5;
-			}
-				
-			else {
-				calculatedMargin = 0;
-				}
-			
-			var finalLink =  beginLiTag + imageURL + endATag + beginImageTag + imageURL + middleImageTag + calculatedMargin + endImageTag + "<span>" + imageWidth + " x " + imageHeight + "</span>" + endLiTag;
-			jQuery('#list-of-images').append(finalLink);
-			numberOfImages ++;
-			
-		}
-		
-	}
-	});	
-}
-	
-		
+})(typeof jQuery == 'undefined' ? false : jQuery);
